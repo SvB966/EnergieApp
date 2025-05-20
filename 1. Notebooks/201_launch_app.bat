@@ -23,7 +23,6 @@ IF %ERRORLEVEL% NEQ 0 (
     pause
     exit /b 1
 )
-
 echo [INFO] Done. Press any key to close...
 pause
 exit /b 0
