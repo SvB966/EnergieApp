@@ -2,7 +2,7 @@
 import os
 from IPython.display import display, HTML, clear_output
 
-# ── Inline injectie van custom notebook CSS ──
+# ── Injecteer optioneel custom notebook CSS ──
 _css_path = os.path.join(os.getcwd(), 'custom.css')
 if os.path.isfile(_css_path):
     with open(_css_path, 'r') as _f:
@@ -13,7 +13,7 @@ else:
         f'<p style="color:red;"><strong>custom.css niet gevonden:</strong> {_css_path}</p>'
     ))
 
-# Standaard imports voor notebooks
+# Standaard imports voor notebooks en utils
 import io
 import re
 import time
@@ -28,6 +28,8 @@ from typing import Tuple, Optional, Set, List, Dict, Callable
 
 import pandas as pd
 import numpy as np
+import pytz
+
 import sqlalchemy
 from sqlalchemy import text
 from sqlalchemy.pool import NullPool
@@ -48,7 +50,6 @@ from ipyaggrid import Grid
 from db_connection import get_engine
 
 # UI helper functie direct in common_imports
-
 def show_home_button(
     target_url: str = 'http://127.0.0.1:8868',
     button_width: str = '200px',
@@ -86,7 +87,7 @@ __all__ = [
     'os', 'io', 're', 'time', 'threading', 'logging', 'traceback',
     'datetime', 'date', 'timedelta', 'relativedelta', 'deque', 'Path',
     'Tuple', 'Optional', 'Set', 'List', 'Dict', 'Callable',
-    'pd', 'np', 'sqlalchemy', 'text', 'NullPool', 'pyodbc',
+    'pd', 'np', 'pytz', 'sqlalchemy', 'text', 'NullPool', 'pyodbc',
     'SQLAlchemyError', 'read_sql_query', 'urllib', 'parse',
     'go', 'pio', 'widgets', 'GridBox', 'Layout',
     'display', 'clear_output', 'HTML',
