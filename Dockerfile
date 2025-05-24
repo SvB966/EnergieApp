@@ -41,4 +41,4 @@ USER 1000
 ENV PATH="/opt/conda/envs/energieapp/bin:\${PATH}" \
     PYTHONPATH="/opt/app:\${PYTHONPATH}"
 
-ENTRYPOINT ["bash", "/opt/app/run_app.sh"]
+ENTRYPOINT ["/bin/bash", "/opt/app/run_app.sh"]
