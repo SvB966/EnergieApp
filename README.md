@@ -1,212 +1,143 @@
+
 # EnergieApp Notebook Suite
 
-[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/status-development-green.svg)]()
+## Introductie
 
-## Korte Beschrijving
+De **EnergieApp Notebook Suite** is een set Jupyter‑notebooks (uitgerold als Voila‑webapps) plus SQL‑Server stored procedures om energie‑meetdata te analyseren, visualiseren en beheren. Gebruikers filteren op EAN, periode en kanaal, waarna de notebooks de juiste datasets ophalen, grafieken tonen of exports genereren. Zo levert de EnergieApp een centrale en gebruiksvriendelijke interface voor data‑analisten en beheerders.
 
-De EnergieApp Notebook Suite is een verzameling van Python Jupyter notebooks en SQL stored procedures, ontworpen voor het analyseren, visualiseren, en beheren van meetdata, zoals energieverbruik en -productie. [cite: 1, 122] Het stelt gebruikers in staat om via een intuïtieve UI filters in te stellen, data op te vragen, factoren bij te werken, en opslagmethodes te configureren. [cite: 3, 49, 75, 100, 124]
+---
 
-## Inhoudsopgave
+## Projectstructuur
 
-- [Overzicht van Notebooks](#overzicht-van-notebooks)
-- [Installatie & Vereisten](#installatie--vereisten)
-- [Snelstart](#snelstart)
-- [Configuratie-details](#configuratie-details)
-- [Best Practices & Aandachtspunten](#best-practices--aandachtspunten)
-- [Contributie-richtlijnen](#contributie-richtlijnen)
-- [Licentie](#licentie)
-- [Contact / Auteurs](#contact--auteurs)
+De repository is georganiseerd zoals hieronder weergegeven. Dit overzicht helpt nieuwe ontwikkelaars om snel de belangrijkste componenten te vinden.
 
-## Overzicht van Notebooks
+```text
+ENERGIEAPP/
+├── 1.Notebooks/
+│   ├── 000_Start_UI.ipynb
+│   ├── 001_All_Types.ipynb
+│   ├── 002_Data_export.ipynb
+│   ├── 003_VMNE_Data_Export.ipynb
+│   ├── 004_Facturupdate.ipynb
+│   ├── 005_MV_Switch.ipynb
+│   ├── 006_Vervanging_Tool.ipynb
+│   ├── 007_Storage_Method.ipynb
+│   ├── 201_launch_app.bat
+│   ├── 202_launch_app.py
+│   ├── caching.py
+│   ├── common_imports.py
+│   ├── custom.css
+│   ├── dataset_utils.py
+│   ├── db_connection.py
+│   ├── db_utils.py
+│   ├── frequency_utils.py
+│   ├── Innax_logo.jpg
+│   ├── mappings.py
+│   ├── notebook_utils.py
+│   ├── progress_bar_widget.py
+│   ├── run_app_001.bat
+│   └── time_utils.py
+├── 2.Stored Procedures/
+│   ├── usp_GetConnectionDataFull_OnlyLDN.sql
+│   ├── usp_GetConnectionDataFull.sql
+│   ├── usp_GetMinMaxPeriod_OnlyLDN.sql
+│   └── usp_GetMinMaxPeriodForEAN.sql
+├── docker-compose.yml
+├── Dockerfile
+├── launch_energieapp.bat
+├── launch_energieapp.command
+├── run_app.sh
+└── environment.yml
+```
 
-Deze suite bevat verschillende notebooks, elk met een specifieke focus:
+---
 
-### `001_All_Types.ipynb` (Energiemonitor & Data Analyse)
+## End‑to‑End Workflow
 
-* **Doel**: Algemene analyse en visualisatie van diverse meetdata. [cite: 122, 124]
-* **Kernfunctionaliteiten**:
-    * Opvragen van data via `usp_GetMinMaxPeriodForEAN` en `usp_GetConnectionDataFull` stored procedures. [cite: 127, 136]
-    * Filteren op EAN/ID, datumbereik, frequentie, en TypeID-groepen. [cite: 153]
-    * Dataverwerking met Pandas voor resampling en aggregatie. [cite: 155]
-    * Interactieve visualisaties (lijn, staaf, heatmap) met Plotly. [cite: 147, 156]
-    * Caching van database-resultaten (TTLCache) om performance te verbeteren. [cite: 148]
-    * Raw-data modus (`@IntervalMinutes = -1`) voor kwaliteitscontroles. [cite: 126]
+Onderstaand ASCII‑diagram toont de volledige workflow, conform het opgegeven sjabloon – van gebruikersinvoer tot draaiende Voila‑dashboards en database‑interactie.
 
-### `002_Data_export.ipynb` (Data Export Functionaliteit)
+```text
+(1) Gebruiker kiest EAN & filters ─┐
+    │ time_utils & frequency_utils valideren invoer
+    │ SQL ① usp_GetMinMaxPeriodForEAN
+┌─────────────────────────────────┐ ├────────> [MinUTC, MaxUTC]
 
-* **Doel**: Gedetailleerde data-export mogelijkheden, inclusief statuskolommen en geavanceerde filtering. [cite: 17]
-* **Kernfunctionaliteiten**:
-    * Gebruikt `usp_GetMinMaxPeriodForEAN` en `usp_GetConnectionDataFull` voor data-extractie. [cite: 6, 17]
-    * Optie om statuskolommen (`(status)`) mee te nemen in de export. [cite: 19, 23]
-    * Data aggregatie op verschillende intervallen, inclusief een raw-modus (`@IntervalMinutes = -1`) en maand-aggregatie. [cite: 5, 19, 21]
-    * Consumptiedata wordt als `FLOAT` behandeld om precisie te waarborgen. [cite: 20, 142]
-    * Dynamische pivot-tabellen waarbij per tijdstempel één rij wordt gecreëerd. [cite: 2, 27, 123]
+(2) Gebruiker klikt “Zoeken” ───────┐
+    │ db_utils → db_connection → SQL ② usp_GetConnectionDataFull
+    │ caching slaat metadata tijdelijk op
+┌─────────────────────────────────┐ ├────────> [ConnectionData, TypeIDs]
 
-### `004_Factorupdate.ipynb` (Factor Update Tool)
+(3) dataset_utils bouwt dataset ──┐
+    │ db_utils → SQL ③ usp_GetRawData
+    │ mappings groepeert kolommen
+    │ frequency_utils past resampling toe
+    │ progress_bar_widget toont voortgang
+┌─────────────────────────────────┐ ├────────> [DataFrame / Grafiek]
 
-* **Doel**: (Her)berekenen en bijwerken van meetfactoren voor registers, gekoppeld aan een `RegistratorID`. [cite: 46, 47]
-* **Kernfunctionaliteiten**:
-    * Ophalen van registers op basis van `RegistratorID`. [cite: 49, 57]
-    * Interactief aanpassen van invoerwaarden (spanningen, stromen, netverlies, multiplier, datums). [cite: 49]
-    * Berekenen van de "New Factor" via de SQL scalar-functie `CalculateFactorWithoutRegister`. [cite: 48, 49, 53]
-    * Grafische (Plotly) en tabellarische vergelijking van de impact van factorwijzigingen. [cite: 49, 60, 61]
-    * Bulk-update van factoren via `TBL_Register_Factor_Update` en de stored procedure `SP_EDS2_Register_Factor_Update`. [cite: 48, 54]
-    * Transactiemanagement voor consistente updates. [cite: 56, 66]
+(4) Run Voila‑dashboards ──────────┐
+    │ run_app.sh maakt logs‑mapje
+    │ start notebooks als webapps
+└─> UI live op poorten 8866–8873 (hoofd‑UI: 8868)
+```
 
-### `005_MV_Switch.ipynb` (Middenspanning Data Switch)
+---
 
-* **Doel**: Faciliteren van het ophalen en exporteren van middenspanning (MV) datasets op basis van EAN en `RegistratorID`. [cite: 73, 74, 75]
-* **Kernfunctionaliteiten**:
-    * Invoeren van EAN om gerelateerde `RegistratorID`s op te halen (via `usp_GetRegistratorListForEAN` of vergelijkbaar). [cite: 76, 80]
-    * Selectie van een specifieke `RegistratorID` uit een dropdown. [cite: 77, 81]
-    * Ophalen van MV-dataset (via `usp_GetMVDataForSwitch` of vergelijkbaar). [cite: 86]
-    * Optioneel toevoegen van een standaardbericht voor ontbrekende waarden. [cite: 77, 81, 82]
-    * Exporteren van de dataset naar Excel (`.xlsx`) met opgemaakte headers en een metadata-sheet. [cite: 78, 84, 90, 91]
+## Bestandsanalyse
 
-### `007_Storage_Method.ipynb` (Opslagmethode Beheer)
+| Bestand | Functie | Interactie |
+|---------|---------|------------|
+| **run_app.sh** | Start alle Voila‑servers, schrijft logs en wacht tot de hoofd‑UI live is. | Wordt uitgevoerd als entry‑point in Docker. |
+| **Dockerfile** | Bouwt het Docker‑image met Python‑omgeving, app‑code en Voila; stelt `run_app.sh` in als CMD. | Wordt gebruikt door *docker‑compose*. |
+| **docker-compose.yml** | Orkestreert de container **energieapp**, mappt host‑poort 8868, mount logs/ en voert health‑check uit. | Aangeroepen door launch‑scripts. |
+| **launch_energieapp.bat** | Windows‑launcher: controleert Docker, draait `docker compose up`, opent browser. | Gebruikt docker-compose.yml. |
+| **launch_energieapp.command** | macOS/Linux‑variant van de launcher. | Zelfde flow als .bat. |
+| **202_launch_app.py** | Start notebooks direct (zonder Docker) via Voila op vaste poorten. | Alternatief voor Docker‑start. |
 
-* **Doel**: Configureren van opslag- en collectie-instellingen (zoals `StorageMethod` en `CollectInterval`) per register en het repareren van data. [cite: 99, 100]
-* **Kernfunctionaliteiten**:
-    * Ophalen van `RegisterID`s op basis van een `RegistratorID` (via `usp_GetRegistratorRegisters`). [cite: 101, 104, 108]
-    * Selectie van `StorageMethod` (e.g., "Interval", "Raw") en `CollectInterval` (5 of 15 minuten). [cite: 102, 105, 106]
-    * Metadata-updates op `TBL_Register` voor de geselecteerde registers. [cite: 103, 109]
-    * Uitvoeren van data-repairlogica via de stored procedure `usp_AdjustDataInterval` om timestamps aan te passen aan het nieuwe interval. [cite: 103, 110]
-    * Batchverwerking voor updates voor transactionele veiligheid. [cite: 110, 117]
+---
 
-## Installatie & Vereisten
+## Notebook‑overzicht
 
-### Software Vereisten
+| Notebook (poort) | Use‑Case | Kernlogica |
+|------------------|----------|------------|
+| 000_Start_UI (8868) | Hoofdinterface/dashboard | Menu met links naar overige notebooks. |
+| 001_All_Types (8866) | Energiemonitor & analyse | Stored procs, resampling, caching, Plotly‑grafieken. |
+| 002_Data_export (8867) | Zelfbedienings‑export | Filtert & exporteert data naar CSV/XLS, pivot. |
+| 003_VMNE_Data_Export (8869) | VMNED‑specifieke export | Gelijkaardig aan 002 maar voor VMNED‑dataset. |
+| 004_Facturupdate (8870) | Factor‑update tool | Berekent & werkt met batch‑updates de meetfactoren bij. |
+| 005_MV_Switch (8871) | Middenspanning‑data switch | Haalt MV‑data op, voegt placeholders toe, exporteert. |
+| 006_Vervanging_Tool (8872) | Vervanging meters/registers | Wizard voor vervangingen, transacties voor consistentie. |
+| 007_Storage_Method (8873) | Opslagmethode beheer | Past storage‑interval & methode aan, repareert data. |
 
-* **Python**: Versie 3.11.11 (zie `environment.yml`).
-* **Package Manager**: Conda wordt aanbevolen voor het beheren van de omgeving.
-* **Afhankelijkheden**: Zie het `environment.yml` bestand voor een volledige lijst. Belangrijke packages zijn o.a. `pandas`, `numpy`, `sqlalchemy`, `pyodbc`, `plotly`, `ipywidgets`, `voila`, `xlsxwriter`, `python-dotenv`.
+---
 
-### Database Vereisten
+## Modules
 
-* **SQL Server**: De applicatie is ontworpen om te werken met een Microsoft SQL Server database.
-* **Stored Procedures**: De volgende stored procedures dienen in de database aanwezig te zijn:
-    * `usp_GetMinMaxPeriodForEAN` [cite: 6, 127]
-    * `usp_GetConnectionDataFull` [cite: 17, 136]
-    * `usp_GetRegistratorListForEAN` (of equivalent, genoemd in `005_MV_Switch.docx`) [cite: 80]
-    * `usp_GetMVDataForSwitch` (fictieve naam, genoemd in `005_MV_Switch.docx`) [cite: 86]
-    * `usp_GetRegistratorRegisters` (genoemd in `007_Storage_Method.docx`) [cite: 104]
-    * `usp_AdjustDataInterval` (genoemd in `007_Storage_Method.docx`) [cite: 110]
-    * Scalar function: `CalculateFactorWithoutRegister` (genoemd in `004_Factorupdate.docx`) [cite: 48]
-    * Stored procedure: `SP_EDS2_Register_Factor_Update` (genoemd in `004_Factorupdate.docx`) [cite: 48]
-* **Omgevingsvariabelen**: Configureer een `.env` bestand in de root van het project met de volgende variabelen voor databaseconnectiviteit (zie `db_connection.py` [cite: 33, 149]):
-    * `DB_HOST`: Hostnaam of IP-adres van de SQL Server.
-    * `DB_DATABASE`: Naam van de database.
-    * `DB_USER` (optioneel): Gebruikersnaam voor SQL Server authenticatie.
-    * `DB_PASSWORD` (optioneel): Wachtwoord voor SQL Server authenticatie.
-    * Indien `DB_USER` en `DB_PASSWORD` niet worden opgegeven, wordt Windows Trusted Connection gebruikt.
-    * SSL-encryptie is standaard ingeschakeld (`Encrypt=yes;TrustServerCertificate=yes;`). [cite: 33, 149]
+| Module | Beschrijving | Toepassing |
+|--------|--------------|-----------|
+| db_connection.py | Maakt SQL‑Server‑verbinding (SQLAlchemy + pyodbc). | Gebruikt door alle notebooks. |
+| common_imports.py | Laadt gedeelde imports en CSS‑styling. | Bovenaan elk notebook. |
+| progress_bar_widget.py | Voortgangsbalk & ETA‑helpers. | Bij lange queries/updates. |
+| frequency_utils.py | Interval‑helpers, automatische capping. | Analyse‑ en export‑notebooks. |
+| db_utils.py | Query‑helpers & batch‑update utilities. | Factorupdate, Storage_Method, etc. |
+| notebook_utils.py | Inputvalidatie & UI‑helpers. | Consistente foutafhandeling. |
+| dataset_utils.py | Datatransformatie & export‑helpers. | Export‑ en analyse‑notebooks. |
+| mappings.py | TypeID‑mappings & checks. | Analyse‑notebooks. |
+| caching.py | Tijdelijke opslag van metadata/datasets (TTL). | Performance‑verbetering in alle notebooks. |
 
-### Installatiestappen
+---
 
-1.  **Clone de repository**:
-    ```bash
-    git clone [https://github.com/jouwgebruikersnaam/EnergieApp.git](https://github.com/jouwgebruikersnaam/EnergieApp.git)
-    cd EnergieApp
-    ```
-2.  **Maak de Conda omgeving aan**:
-    ```bash
-    conda env create -f "3. Configuration & Build/environment.yml"
-    ```
-3.  **Activeer de Conda omgeving**:
-    ```bash
-    conda activate energymonitor_env
-    ```
-4.  **Configureer `.env` bestand**:
-    Maak een bestand genaamd `.env` in de root van het project en voeg de database verbindingsdetails toe zoals hierboven beschreven. Bijvoorbeeld:
-    ```env
-    DB_HOST=jouw_server_naam
-    DB_DATABASE=jouw_database_naam
-    # DB_USER=jouw_gebruikersnaam (optioneel)
-    # DB_PASSWORD=jouw_wachtwoord (optioneel)
-    ```
-5.  **Installeer de Stored Procedures**: Zorg dat alle benodigde SQL stored procedures en functies (zie `2. Stored Procedures/` map) in de doel-database zijn geïnstalleerd.
+## Samenwerking
 
-## Snelstart
+1. **Start‑up** – `run_app.sh` (of `202_launch_app.py`) lanceert per notebook een Voila‑service op een vaste poort.  
+2. **Navigatie** – De gebruiker start op 000_Start_UI (8868) en kiest een tool.  
+3. **Data‑laag** – Notebooks roepen stored procedures aan via `db_connection.py`.  
+4. **Caching & performance** – `caching.py` slaat resultaten tijdelijk op; `frequency_utils.py` schaalt intervallen bij grote datasets.  
+5. **Updates** – Tools die schrijven (004, 007) gebruiken transacties voor rollback bij fouten.  
 
-1.  Zorg dat alle installatiestappen zijn voltooid.
-2.  Start de applicatie launcher:
-    ```bash
-    python "1. Notebooks/202_launch_app.py"
-    ```
-    Dit script start meerdere Voila-servers voor de verschillende notebooks.
-3.  Open de hoofdinterface in je browser, deze wordt automatisch geopend of navigeer naar `http://127.0.0.1:8868` (of de poort gespecificeerd in `202_launch_app.py`).
-4.  Vanuit de hoofdinterface (`000_Start_UI.ipynb`) kun je navigeren naar de verschillende tools/notebooks.
+De notebooks delen dezelfde util‑modules voor uniforme validatie, error‑handling en styling. Dankzij deze modulaire opzet kunnen nieuwe tools snel worden toegevoegd en wijzigingen centraal worden doorgevoerd.
 
-    Voorbeeld: Om direct een specifieke notebook (bijv. `001_All_Types.ipynb`) te draaien met Voila:
-    ```bash
-    voila "1. Notebooks/001_All_Types.ipynb" --port=8866
-    ```
+---
 
-## Configuratie-details
+## Controle & Validatie
 
-### Stored Procedures
-
-De applicatie is sterk afhankelijk van de correcte werking van de meegeleverde SQL stored procedures. [cite: 2, 123] Deze procedures zorgen voor efficiënte data-extractie en -manipulatie direct op de database server.
-
-* `usp_GetMinMaxPeriodForEAN`: Bepaalt het datumbereik van beschikbare data voor een EAN/ID en TypeIDs. [cite: 6, 127]
-* `usp_GetConnectionDataFull`: Haalt de daadwerkelijke meetdata op, gepivoteerd per register, en ondersteunt aggregatie en status-informatie. [cite: 17, 136] Kolomnamen volgen de conventie `<RegisterNaam> (<RegisterID>) (consumption)` en `<RegisterNaam> (<RegisterID>) (status)`. [cite: 23, 38, 143, 158]
-* Andere specifieke stored procedures worden gebruikt door de respectievelijke notebooks voor factor updates, MV switch, en storage method aanpassingen.
-
-### Caching
-
-* Een `TTLCache` (Time-To-Live Cache) wordt gebruikt in de Python-laag om de resultaten van database queries (zoals min/max periodes en volledige datasets) tijdelijk op te slaan. [cite: 32, 148] Dit vermindert de belasting op de database en versnelt herhaalde aanvragen. De standaard TTL (Time-To-Live) is 300 seconden (5 minuten). [cite: 148]
-
-### Kolomnaam Conventies
-
-* Gepivoteerde datakolommen in de output van `usp_GetConnectionDataFull` en in de Python DataFrames volgen een duidelijke naamgevingsconventie:
-    * Consumptiedata: `"<Register Beschrijving> (<RegisterID>) (consumption)"` [cite: 23, 38, 143, 158]
-    * Statusdata (optioneel): `"<Register Beschrijving> (<RegisterID>) (status)"` [cite: 23, 38, 143, 158]
-* In de `005_MV_Switch.ipynb` worden kolomnamen gestandaardiseerd naar kleine letters met underscores. [cite: 89]
-
-### Datatype Precisie
-
-* In `usp_GetConnectionDataFull` en de Python-laag wordt consumptiedata als `FLOAT` behandeld om afrondingsverschillen te voorkomen en volledige precisie te waarborgen. [cite: 20, 22, 142] Dit is een wijziging ten opzichte van eerdere versies waar `DECIMAL(18,6)` mogelijk werd gebruikt. [cite: 20]
-
-## Best Practices & Aandachtspunten
-
-* **Inputvalidatie**:
-    * Valideer EANs/IDs op formaat en bestaan in de database. [cite: 94]
-    * Datums moeten in het formaat `dd/MM/yyyy HH:mm` zijn. [cite: 9, 129] Strikte validatie is geïmplementeerd. [cite: 37, 157]
-    * Zorg dat de einddatum niet voor de startdatum ligt.
-    * Voorkom dat datums in de toekomst liggen.
-    * Selecties voor `RegistratorID` in `005_MV_Switch.ipynb` moeten uit de dynamisch gevulde dropdown komen. [cite: 95]
-* **Performance**:
-    * De `TTLCache` helpt de database load te verminderen. [cite: 32, 148] Pas de TTL aan indien nodig. [cite: 37, 157]
-    * Gebruik de `NullPool` in SQLAlchemy voor snellere verbindingen bij frequente, korte queries. [cite: 50]
-    * De `fast_executemany=True` optie wordt gebruikt voor potentieel snellere bulk inserts/updates. [cite: 67]
-    * Overweeg timeouts voor lange queries. [cite: 96, 119]
-    * Bij de `004_Factorupdate.ipynb` worden updates in batches verwerkt. [cite: 117]
-    * Data-requests worden gelimiteerd tot `MAX_ROWS` (standaard 8000 rijen) om performance problemen te voorkomen. De UI geeft waarschuwingen en past frequenties automatisch aan ("capping").
-* **Security**:
-    * `.env` bestanden met credentials mogen **nooit** in versiebeheer (Git) worden opgenomen. [cite: 39, 98, 159] Gebruik hiervoor de `.gitignore`.
-    * Voor productieomgevingen, gebruik secrets management via CI/CD pipelines of orchestratieplatformen zoals Kubernetes. [cite: 39, 98, 159]
-    * Alle SQL queries zijn geparameteriseerd om SQL-injectie te voorkomen. [cite: 118]
-* **Foutafhandeling**:
-    * De stored procedures gebruiken `THROW` voor duidelijke foutmeldingen (bijv., error 50000 voor ongeldige parameters, 50001 voor geen data). [cite: 24]
-    * Python-code logt databasefouten en geeft feedback in de UI. [cite: 68]
-    * Transacties in `004_Factorupdate.ipynb` en `007_Storage_Method.ipynb` zorgen voor rollback bij fouten. [cite: 69, 110, 118]
-* **Styling & UX**:
-    * `common_imports.py` injecteert `custom.css` voor een consistente look-and-feel. [cite: 33, 70, 114, 150]
-    * `progress_utils.py` levert `ProgressDisplay` voor visuele feedback met ETA. [cite: 33, 52, 87, 112, 116, 151]
-* **CI/CD**:
-    * Overweeg een CI/CD pipeline die `poetry run python -m mappings` uitvoert om de uniciteit van TypeIDs in `mappings.py` te valideren. [cite: 39, 152, 159]
-
-## Contributie-richtlijnen
-
-Momenteel zijn er geen specifieke richtlijnen voor contributie. Voor interne projecten, volg de gangbare ontwikkelstandaarden van het team.
-
-## Licentie
-
-Dit project wordt uitgebracht onder de MIT Licentie. Zie het `LICENSE` bestand voor meer details.
-
-## Contact / Auteurs
-
-* **Afdeling**: Data Management, INNAX Meten B.V.
-* **Contact**: (Voeg hier relevante contactinformatie of mailgroep toe)
+Dit README is gesynchroniseerd met de huidige projectstructuur. Bestands‑ en mappenamen, poortnummers en modules zijn gecontroleerd op consistentie met de repo. Het workflow‑diagram volgt het aangeleverde sjabloon en weerspiegelt de daadwerkelijke applicatiestroom. Zorg bij code‑wijzigingen dat deze documentatie wordt bijgewerkt om afstemming tussen repo en README te behouden.
