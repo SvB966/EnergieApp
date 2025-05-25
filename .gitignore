@@ -109,3 +109,9 @@ Thumbs.db
 # Project-specifieke buildmap (spaties geëscapet)
 ###############################################################################
 3.\ Configuration\ \&\ Build/
+
+# Ignore Jupyter & micromamba runtime artifacts
+.ipython/
+.jupyter/
+.local/
+.runtime/

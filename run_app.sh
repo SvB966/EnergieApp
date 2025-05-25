@@ -1,29 +1,23 @@
-# run_app.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
 ###############################################################################
-# EnergieApp DASHBOARD LAUNCHER – POSIX-compliant (WSL, Docker, bare metal)
-###############################################################################
-# 1. Loads micromamba hook so `micromamba activate` works in a script
-# 2. Activates env “energieapp”
-# 3. Adds “1. Notebooks” to PYTHONPATH so helpers next to notebooks are found
-# 4. Starts each Voila notebook on its assigned port
+# EnergieApp DASHBOARD LAUNCHER – POSIX‐compliant (WSL, Docker, bare metal)
 ###############################################################################
 
 # ---------------------------------------------------------------------------
-# Micromamba shell‐hook (enables `micromamba activate` inside a script)
+# Micromamba shell‐hook (enables `micromamba activate` in scripts)
 # ---------------------------------------------------------------------------
 eval "$(micromamba shell hook --shell bash)"
 
 # ---------------------------------------------------------------------------
-# Resolve repository root (script lives in the repo root)
+# Repository root (script sits in the repo root)
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # ---------------------------------------------------------------------------
-# Jupyter + micromamba writable dirs (non-root safe)
+# Jupyter + micromamba writable dirs (non‐root safe)
 # ---------------------------------------------------------------------------
 ORIG_HOME="${HOME}"
 export XDG_DATA_HOME="$SCRIPT_DIR/.local/share"
@@ -34,9 +28,9 @@ export MAMBA_ROOT_PREFIX="${ORIG_HOME}/.local/share/mamba"
 mkdir -p "$XDG_DATA_HOME" "$XDG_CONFIG_HOME" "$XDG_RUNTIME_DIR" logs
 
 # ---------------------------------------------------------------------------
-# Make sure Python can import the helper modules sitting in “1. Notebooks/”
+# Make Python see the helper modules co‐located with the notebooks
 # ---------------------------------------------------------------------------
-export PYTHONPATH="$SCRIPT_DIR/1. Notebooks:$PYTHONPATH"
+export PYTHONPATH="$SCRIPT_DIR/1. Notebooks:${PYTHONPATH:-}"
 
 # ---------------------------------------------------------------------------
 # Notebook ports configuration
@@ -92,5 +86,5 @@ echo "[INFO] Waiting for main UI at http://localhost:$UI_PORT …"
 until nc -z 127.0.0.1 "$UI_PORT"; do sleep 2; done
 echo "[INFO] EnergieApp live at http://localhost:$UI_PORT"
 
-# Keep this process alive (especially inside a container)
+# Keep this process alive (especially in Docker)
 wait
