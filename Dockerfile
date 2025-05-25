@@ -1,5 +1,5 @@
 ###############################################################################
-# Dockerfile for EnergieApp
+# EnergieApp – multi-stage Docker build (micromamba, src-layout, Voila)
 ###############################################################################
 
 ############################
@@ -19,7 +19,10 @@ RUN micromamba create -y -n energieapp -f /tmp/environment.yml \
 ############################
 FROM mambaorg/micromamba:1.5.8-jammy
 
-# ---- OS packages (ODBC + netcat) -------------------------------------------
+# need root for apt
+USER root
+
+# ---- OS packages (ODBC 17 + netcat) ----------------------------------------
 RUN set -eux; \
     apt-get update -qq; \
     apt-get install -y --no-install-recommends \
@@ -32,27 +35,27 @@ RUN set -eux; \
         apt-get install -y --no-install-recommends msodbcsql17 unixodbc-dev; \
     apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# ---- Copy Conda env from builder -------------------------------------------
+# ---- Conda env -------------------------------------------------------------
 COPY --from=builder /opt/conda/envs/energieapp /opt/conda/envs/energieapp
 
-# ---- Application code -------------------------------------------------------
+# ---- App source ------------------------------------------------------------
 WORKDIR /opt/app
 COPY . /opt/app
 RUN find /opt/app -type f -name '*.sql' -delete \
- && chmod +x /opt/app/run_app.sh
+ && chmod +x /opt/app/bin/run_app.sh
 
-# runtime dirs for non-root user
+# runtime dirs for unprivileged user
 RUN mkdir -p /opt/app/.local/share /opt/app/.config /opt/app/.runtime \
  && chown -R 1000:1000 /opt/app
 USER 1000
 
-# ---- Runtime environment ----------------------------------------------------
+# ---- Runtime environment ---------------------------------------------------
 ENV PATH="/opt/conda/envs/energieapp/bin:$PATH" \
-    PYTHONPATH="/opt/app:$PYTHONPATH" \
+    PYTHONPATH="/opt/app/src:$PYTHONPATH" \
     PORT=8868
 
 EXPOSE 8868
-ENTRYPOINT ["/bin/bash", "/opt/app/run_app.sh"]
+ENTRYPOINT ["/bin/bash", "/opt/app/bin/run_app.sh"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
   CMD nc -z 127.0.0.1 8868 || exit 1
