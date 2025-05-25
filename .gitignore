@@ -109,3 +109,9 @@ Thumbs.db
 # Project-specifieke buildmap (spaties geëscapet)
 ###############################################################################
 3.\ Configuration\ \&\ Build/
+.local/
+.config/
+.runtime/
+mamba/
+data/
+.dockerignore
