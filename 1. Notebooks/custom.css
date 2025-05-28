@@ -1,0 +1,144 @@
+:root {
+    --primary-color: #0069d9;
+    --primary-hover: #005cbf;
+    --primary-active: #0050a3;
+    --text-color: #2c3e50;
+    --bg-input: #ffffff;
+    --border-input: #dfe3e8;
+    --border-radius: 6px;
+    --spacing: 0.5rem;
+    --transition-speed: 0.2s;
+}
+
+/* --- Basis typografie & body --- */
+body,
+.widget-label,
+.widget-html,
+.widget-dropdown,
+.widget-text {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    color: var(--text-color) !important;
+}
+
+/* --- Globale container alignment --- */
+.jupyter-widgets.widget-container.widget-label {
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* --- Labels --- */
+.widget-label {
+    margin-right: var(--spacing) !important;
+    font-weight: 500 !important;
+}
+
+.widget-text input[type="text"],
+.widget-text input[type="number"],
+.widget-dropdown select {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 8rem !important;
+    height: 2.5rem !important;
+    padding: 0 var(--spacing) !important;
+    margin: var(--spacing) 0 !important;
+    border: 1px solid var(--border-input) !important;
+    border-radius: var(--border-radius) !important;
+    background-color: var(--bg-input) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05) !important;
+    transition: border-color var(--transition-speed) ease-in-out !important;
+}
+.widget-text input:focus,
+.widget-dropdown select:focus {
+    border-color: var(--primary-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(0,105,217,0.2) !important;
+}
+.widget-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 var(--spacing) !important;
+    margin: var(--spacing) var(--spacing) 0 0 !important;
+    height: 2.5rem !important;
+    min-width: 6.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    color: #fff !important;
+    background-color: var(--primary-color) !important;
+    border: 1px solid var(--primary-color) !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+    cursor: pointer !important;
+    transition:
+        background-color var(--transition-speed) ease,
+        border-color var(--transition-speed) ease,
+        box-shadow var(--transition-speed) ease,
+        transform var(--transition-speed) ease !important;
+}
+.widget-button:hover {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    transform: translateY(-1px) !important;
+}
+.widget-button:active {
+    background-color: var(--primary-active) !important;
+    border-color: var(--primary-active) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+    transform: translateY(0) !important;
+}
+.widget-button:disabled {
+    background-color: #a0aec0 !important;
+    border-color: #a0aec0 !important;
+    box-shadow: none !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+}
+
+.widget-button.mod-outline {
+    background-color: transparent !important;
+    color: var(--primary-color) !important;
+    border: 1px solid var(--primary-color) !important;
+}
+.widget-button.mod-outline:hover {
+    background-color: rgba(0,105,217,0.1) !important;
+}
+
+/* --- Checkbox labels --- */
+.widget-checkbox label {
+    margin-left: var(--spacing) !important;
+    font-weight: 400 !important;
+}
+
+/* --- Accordion headers & containers --- */
+.widget-accordion > .widget-label {
+    font-weight: 600 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* --- Progress bar styling (optioneel) --- */
+.jupyter-widgets .progress {
+    height: 0.75rem !important;
+    margin-top: var(--spacing) !important;
+    background-color: #e9ecef !important;
+    border-radius: var(--border-radius) !important;
+}
+.jupyter-widgets .progress-bar {
+    transition: width var(--transition-speed) ease !important;
+}
+
+/* ——— Zorg dat HBox-containers wrappen en baseline uitlijnen ——— */
+.jupyter-widgets .widget-hbox {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: var(--spacing) !important;
+}
+.jupyter-widgets .widget-hbox .widget-label,
+.jupyter-widgets .widget-hbox .widget-text,
+.jupyter-widgets .widget-hbox .widget-dropdown,
+.jupyter-widgets .widget-hbox .widget-button {
+    align-self: baseline !important;
+    margin-top: 0 !important;
+}
