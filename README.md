@@ -1,133 +1,142 @@
-
+````markdown
 # EnergieApp Notebook Suite
 
 ## Introductie
 
-De **EnergieApp Notebook Suite** is een verzameling Jupyter-notebooks (uitgerold als Voila-webapps) en SQL Server stored procedures om energie-meetdata te analyseren, visualiseren en beheren. Gebruikers filteren op EAN, periode en kanaal, waarna de notebooks datasets ophalen, grafieken tonen of exports genereren. Zo biedt de EnergieApp een centrale en gebruiksvriendelijke interface voor data-analisten en beheerders.
+De **EnergieApp Notebook Suite** is een verzameling Jupyter-notebooks (uitgerold als Voila-webapps) én SQL-Server stored procedures om energie-meetdata te analyseren, visualiseren en beheren. Gebruikers filteren op EAN, periode en kanaal; de notebooks halen vervolgens de juiste datasets op, tonen interactieve grafieken of genereren exports. Zo biedt de EnergieApp een centrale en gebruiksvriendelijke interface voor data-analisten en beheerders.
 
 ---
 
 ## Projectstructuur
 
-```
-
+```text
 EnergieApp/
 ├── 1. Notebooks/
-│   ├── 000\_Start\_UI.ipynb
-│   ├── 001\_All\_Types.ipynb
-│   ├── 002\_Data\_export.ipynb
-│   ├── 003\_VMNED\_Data\_Export.ipynb
-│   ├── 004\_Factorupdate.ipynb
-│   ├── 005\_MV\_Switch.ipynb
-│   ├── 006\_Vervanging\_Tool.ipynb
-│   ├── 007\_Storage\_Method.ipynb
-│   ├── 201\_launch\_app.bat
-│   ├── 202\_launch\_app.py
-│   ├── Innax\_logo.jpg
+│   ├── 000_Start_UI.ipynb
+│   ├── 001_All_Types.ipynb
+│   ├── 002_Data_export.ipynb
+│   ├── 003_VMNED_Data_Export.ipynb
+│   ├── 004_Factorupdate.ipynb
+│   ├── 005_MV_Switch.ipynb
+│   ├── 006_Vervanging_Tool.ipynb
+│   ├── 007_Storage_Method.ipynb
+│   ├── 201_launch_app.bat
+│   ├── 202_launch_app.py
+│   ├── Innax_logo.jpg
 │   ├── caching.py
-│   ├── common\_imports.py
+│   ├── common_imports.py
 │   ├── custom.css
-│   ├── dataset\_utils.py
-│   ├── db\_connection.py
-│   ├── db\_utils.py
+│   ├── dataset_utils.py
+│   ├── db_connection.py
+│   ├── db_utils.py
 │   ├── environment.yml
-│   ├── frequency\_utils.py
+│   ├── frequency_utils.py
 │   ├── mappings.py
-│   ├── progress\_bar\_widget.py
-│   ├── run\_app\_001.bat
-│   ├── time\_utils.py
-│   ├── verify\_env\_deps.py
-│   └── **pycache**/
+│   ├── progress_bar_widget.py
+│   ├── run_app_001.bat
+│   ├── time_utils.py
+│   ├── verify_env_deps.py
+│   └── __pycache__/
 ├── 2. Stored Procedures/
-│   ├── usp\_GetConnectionDataFull.sql
-│   ├── usp\_GetConnectionDataFull\_OnlyLDNODN.sql
-│   ├── usp\_GetMinMaxPeriodForEAN.sql
-│   └── usp\_GetMinMaxPeriod\_OnlyLDNODN.sql
+│   ├── usp_GetConnectionDataFull.sql
+│   ├── usp_GetConnectionDataFull_OnlyLDNODN.sql
+│   ├── usp_GetMinMaxPeriodForEAN.sql
+│   └── usp_GetMinMaxPeriod_OnlyLDNODN.sql
+├── docker-compose.yml
+├── Dockerfile
+├── launch_energieapp.bat
+├── launch_energieapp.command
+└── run_app.sh
+````
 
+---
+
+## End-to-End Workflow
+
+```text
+(1) Gebruiker kiest EAN & filters ─┐
+    │ time_utils & frequency_utils valideren invoer
+    │ SQL ① usp_GetMinMaxPeriodForEAN
+┌─────────────────────────────────┐ ├────────> [MinUTC, MaxUTC]
+
+(2) Gebruiker klikt “Zoeken” ───────┐
+    │ db_utils → db_connection → SQL ② usp_GetConnectionDataFull
+    │ caching slaat metadata tijdelijk op
+┌─────────────────────────────────┐ ├────────> [ConnectionData, TypeIDs]
+
+(3) dataset_utils bouwt dataset ──┐
+    │ db_utils → SQL ③ usp_GetRawData
+    │ mappings groepeert kolommen
+    │ frequency_utils past resampling toe
+    │ progress_bar_widget toont voortgang
+┌─────────────────────────────────┐ ├────────> [DataFrame / Grafiek]
+
+(4) Run Voila-dashboards ──────────┐
+    │ verify_env_deps.py checkt deps
+    │ run_app.sh maakt logs-mapje
+    │ start notebooks als webapps (poorten 8866–8873)
+└─> UI live op poort 8868 (000_Start_UI)
 ```
 
 ---
 
 ## Bestandsanalyse
 
-| Bestand                   | Functie                                                      |
-|---------------------------|--------------------------------------------------------------|
-| 000_Start_UI.ipynb        | Hoofd-dashboard, toegang tot alle notebooks                  |
-| 001_All_Types.ipynb       | Energiemonitor, analyse, Plotly-visualisatie                |
-| 002_Data_export.ipynb     | Zelfbedienings-export (CSV/XLS, pivot)                       |
-| 003_VMNED_Data_Export.ipynb | VMNED-specifieke export                                  |
-| 004_Factorupdate.ipynb    | Tool voor batch-factorupdates                                |
-| 005_MV_Switch.ipynb       | Middenspanning data switch, export                          |
-| 006_Vervanging_Tool.ipynb | Wizard voor meter/registervervanging                         |
-| 007_Storage_Method.ipynb  | Opslagmethode beheer, datacorrectie                         |
-| 201_launch_app.bat        | Windows launcher voor notebooks                              |
-| 202_launch_app.py         | Start notebooks direct via Voila op vaste poorten           |
-| Innax_logo.jpg            | Logo voor branding                                           |
-| caching.py                | (TTL) caching van metadata en datasets                      |
-| common_imports.py         | Gedeelde imports, CSS-styling                               |
-| custom.css                | Styling voor UI                                              |
-| dataset_utils.py          | Helpers voor datatransformatie en export                    |
-| db_connection.py          | SQL Server connectie (SQLAlchemy + pyodbc)                  |
-| db_utils.py               | Query-helpers & batch update utilities                      |
-| environment.yml           | Conda/Python environment specification                      |
-| frequency_utils.py        | Interval en resampling utilities                            |
-| mappings.py               | TypeID mappings, check-logica                               |
-| progress_bar_widget.py    | Voortgangsbalk & ETA-widget                                 |
-| run_app_001.bat           | Batch script voor run-app                                   |
-| time_utils.py             | Tijdvalidatie en helpers                                    |
-| verify_env_deps.py        | Controle op omgeving en dependencies                        |
-| __pycache__/              | (Wordt aanbevolen te .gitignore-en, bevat bytecode caches)  |
+| Bestand                        | Functie                                                                                        | Interactie                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| **run\_app.sh**                | Start alle Voila-servers, schrijft logs en wacht tot de hoofd-UI live is.                      | Entry-point in Docker/CMD in Dockerfile.    |
+| **Dockerfile**                 | Bouwt het Docker-image met Python-omgeving, app-code en Voila; zet `run_app.sh` als CMD.       | Gebruikt door *docker-compose*.             |
+| **docker-compose.yml**         | Orkestreert de container **energieapp**, mappt host-poort 8868, mount *logs/* en health-check. | Aangeroepen door launcher-scripts.          |
+| **launch\_energieapp.bat**     | Windows-launcher: controleert Docker, draait `docker compose up`, opent browser.               | Gebruikt *docker-compose.yml*.              |
+| **launch\_energieapp.command** | macOS/Linux-launcher: zelfde flow als .bat.                                                    |                                             |
+| **202\_launch\_app.py**        | Start notebooks lokaal (zonder Docker) via Voila op vaste poorten.                             | Alternatief voor Docker-flow.               |
+| **environment.yml**            | Definitie van Conda-omgeving voor lokale setup en dependency management.                       | Gebruikt door `verify_env_deps.py` en devs. |
+| **verify\_env\_deps.py**       | Controleert of de lokaal geïnstalleerde Python-packages overeenkomen met `environment.yml`.    | Draait vóór opstarten notebooks.            |
 
 ---
 
-## Stored Procedures
+## Notebook-overzicht
 
-| Script                                      | Doel                                 |
-|----------------------------------------------|--------------------------------------|
-| usp_GetConnectionDataFull.sql                | Haalt volledige connectiedata op     |
-| usp_GetConnectionDataFull_OnlyLDNODN.sql     | Connectiedata subset                 |
-| usp_GetMinMaxPeriodForEAN.sql                | Haalt min/max periode voor EAN op    |
-| usp_GetMinMaxPeriod_OnlyLDNODN.sql           | Min/max periode subset               |
-
----
-
-## Workflow (Hoog Over)
-
-1. **Start-up:**  
-   - Via `202_launch_app.py` of `201_launch_app.bat` (of als Docker-stack met eigen compose).
-2. **Gebruiker:**  
-   - Start op `000_Start_UI.ipynb` → kiest tool → voert filters in.
-3. **Datalaag:**  
-   - Via notebooks en helpers (db_utils, db_connection) worden stored procs aangesproken.
-4. **Transform & Visualisatie:**  
-   - Helpers (`dataset_utils`, `mappings`, `frequency_utils`) bouwen en tonen de output.
-5. **Export & Monitoring:**  
-   - `progress_bar_widget`, caching en environment checks ondersteunen stabiliteit en snelheid.
+| Notebook (poort)                    | Use-Case                    | Kernlogica                                               |
+| ----------------------------------- | --------------------------- | -------------------------------------------------------- |
+| **000\_Start\_UI** (8868)           | Hoofdinterface/dashboard    | Menu met links naar overige notebooks.                   |
+| **001\_All\_Types** (8866)          | Energiemonitor & analyse    | Stored procs, resampling, caching, Plotly-grafieken.     |
+| **002\_Data\_export** (8867)        | Zelfbedienings-export       | Filteren & exporteren naar CSV/XLS, pivot-tabellen.      |
+| **003\_VMNED\_Data\_Export** (8869) | VMNED-specifieke export     | Zelfde flow als 002 maar op VMNED-dataset.               |
+| **004\_Factorupdate** (8870)        | Factor-update tool          | Batch-updates van meetfactoren met transaction-rollback. |
+| **005\_MV\_Switch** (8871)          | Middenspanning-data switch  | Ophalen MV-data, toevoegen placeholders, exporteren.     |
+| **006\_Vervanging\_Tool** (8872)    | Vervanging meters/registers | Wizard-flow voor vervanging, consistente transacties.    |
+| **007\_Storage\_Method** (8873)     | Opslagmethode beheer        | Aanpassen storage-interval/methode, reparatie van data.  |
 
 ---
 
-## Omgevingsbeheer & Git-best-practices
+## Modules
 
-- Gebruik altijd `environment.yml` voor een consistente Python/Conda-omgeving.
-- Voeg `__pycache__/` en `*.pyc` toe aan je `.gitignore`:
-```
-
-**pycache**/
-\*.pyc
-
-```
-- Controleer de `README.md` bij elke (structurele) update van de repo.
-
----
-
-## Meer informatie
-
-- **Energie_app branch:** [link](https://github.com/SvB966/EnergieApp/tree/Energie_app)
-- **Main branch:** [link](https://github.com/SvB966/EnergieApp/tree/main)
+| Module                       | Beschrijving                                                              | Toepassing                                 |
+| ---------------------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
+| **db\_connection.py**        | SQL-Server-verbinding (SQLAlchemy + pyodbc).                              | Gebruikt door alle notebooks.              |
+| **common\_imports.py**       | Laadt gedeelde imports en CSS-styling.                                    | Bovenaan elk notebook.                     |
+| **progress\_bar\_widget.py** | Voortgangsbalk & ETA-helpers.                                             | Bij lange queries/updates.                 |
+| **frequency\_utils.py**      | Interval-helpers, automatische capping voor grote datumbereiken.          | In analyse- en export-notebooks.           |
+| **db\_utils.py**             | Query-helpers & batch-update utilities.                                   | Factorupdate, Storage\_Method, etc.        |
+| **notebook\_utils.py**       | Inputvalidatie & UI-helpers.                                              | Foutafhandeling en consistentie.           |
+| **dataset\_utils.py**        | Datatransformatie & export-helpers.                                       | Export- en analyse-workflows.              |
+| **mappings.py**              | TypeID-mappings & checks.                                                 | Analyse-notebooks.                         |
+| **caching.py**               | Tijdelijke opslag van metadata/datasets (TTL).                            | Performance-verbetering in alle notebooks. |
+| **time\_utils.py**           | Tijdvalidatie, conversies en UTC-capping.                                 | Start-UI en filtering.                     |
+| **verify\_env\_deps.py**     | Controleert lokale Python-dependencies aan de hand van `environment.yml`. | Draait vóór notebooks-activatie.           |
 
 ---
 
-```
+## Samenwerking
+
+1. **Start-up** – `run_app.sh` (of `202_launch_app.py`) lanceert per notebook een Voila-service op vooraf bepaalde poorten.
+2. **Validatie** – `verify_env_deps.py` checkt dat alle Conda-dependencies aanwezig zijn.
+3. **Navigatie** – De gebruiker start op 000\_Start\_UI (poort 8868) en kiest een tool.
+4. **Data-laag** – Notebooks roepen stored procedures aan via `db_connection.py`.
+5. **Caching & performance** – `caching.py` slaat resultaten tijdelijk op; `frequency_utils.py` past interval-capping toe.
+6. **Schrijven** – Tools die data muteren (004, 007) gebruiken transacties met rollback-mechanisme.
+
+De notebooks delen dezelfde util-modules voor uniforme validatie, foutafhandeling en styling. Dankzij deze modulaire opzet kunnen nieuwe tools snel worden toegevoegd en wijzigingen centraal worden doorgevoerd.
 
 ---
-
