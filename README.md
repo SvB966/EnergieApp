@@ -140,3 +140,17 @@ EnergieApp/
 De notebooks delen dezelfde util-modules voor uniforme validatie, foutafhandeling en styling. Dankzij deze modulaire opzet kunnen nieuwe tools snel worden toegevoegd en wijzigingen centraal worden doorgevoerd.
 
 ---
+
+## Running with Docker
+
+1. Copy `.env.example` to `.env` and adjust credentials.
+2. Start the stack:
+   ```bash
+   docker compose up --build
+   ```
+3. Browse to `http://localhost:8868` for the UI. Logs live in `logs/`.
+4. Stop everything with `docker compose down`.
+
+### Common pitfalls
+- SQL Server can take a minute to become healthy.
+- Use `docker compose down -v` to reset the database.
