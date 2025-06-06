@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  energieapp:
+    build: .
+    ports:
+      - "8868:8868"
+      - "8866:8866"
+      - "8867:8867"
+      - "8869:8869"
+      - "8870:8870"
+      - "8871:8871"
+      - "8872:8872"
+      - "8873:8873"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - TZ=Europe/Amsterdam
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8868"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
