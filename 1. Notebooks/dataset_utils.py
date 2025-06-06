@@ -164,7 +164,7 @@ def build_dataset(
         start_date,
         end_date,
         interval_minutes=interval_minutes,
-        include_status=include_status_raw and not aggregate,
+        include_status=include_status_raw,
         search_method=search_method,
         engine=engine,
     )
