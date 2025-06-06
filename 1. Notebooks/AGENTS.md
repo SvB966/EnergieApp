@@ -1,3 +1,24 @@
+
+## Build
+```bash
+echo "No build step required"
+```
+
+## Test
+```bash
+python -m py_compile *.py
+```
+
+## Lint
+```bash
+echo "No lint step defined"
+```
+
+## Deploy
+```bash
+echo "Launch notebooks with Voila or Jupyter as needed"
+```
+=======
 # Overview
 This folder contains all Jupyter notebooks, shared Python modules and scripts used to launch the EnergieApp locally. The notebooks are rendered as Voila dashboards. Key files to edit include `202_launch_app.py`, `environment.yml`, `db_connection.py` and the various `*_utils.py` modules.
 
@@ -23,3 +44,4 @@ python 202_launch_app.py
 - Use commit titles like `feat(notebooks): <summary>` or `fix(notebooks): <summary>`.
 - PR titles should begin with `[Notebooks]` followed by a short description.
 - Explain how to reproduce and test changes in the PR body.
+
